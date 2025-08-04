@@ -17,10 +17,29 @@ interface DynamicJsonFormProps {
 
 const isSimpleObject = (schema: JsonSchemaType): boolean => {
   const supportedTypes = ["string", "number", "integer", "boolean", "null"];
-  if (schema.type && supportedTypes.includes(schema.type)) return true;
+  if (
+    schema.type &&
+    (supportedTypes.includes(schema.type as string) ||
+      (Array.isArray(schema.type) &&
+        schema.type.every((t) => supportedTypes.includes(t))))
+  )
+    return true;
+  if (
+    !schema.type &&
+    (schema.properties ||
+      schema.items ||
+      schema.oneOf ||
+      schema.anyOf ||
+      schema.const)
+  )
+    return false;
+
   if (schema.type === "object") {
     return Object.values(schema.properties ?? {}).every(
-      (prop) => prop.type && supportedTypes.includes(prop.type),
+      (prop) =>
+        (prop.type && supportedTypes.includes(prop.type as string)) ||
+        (Array.isArray(prop.type) &&
+          prop.type.every((t) => supportedTypes.includes(t))),
     );
   }
   if (schema.type === "array") {
